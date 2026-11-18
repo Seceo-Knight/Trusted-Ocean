@@ -14,7 +14,7 @@ Architecture & Integration Reference. No dummy or simulated data is used.
 | 1 | Backend skeleton + first real collector (NOAA NDBC buoys) | Done |
 | 2 | More collectors: Argo, Copernicus Marine, OBIS done; EMODnet, GBIF, NOAA ERDDAP, tides, AIS next | In progress |
 | 3 | TimescaleDB time-series database + query API | Done |
-| 4 | Post-quantum signing of every batch (ML-DSA) | Planned |
+| 4 | Post-quantum signing of every batch (ML-DSA-65) + verification API, CLI and dashboard page | Done |
 | 5 | IPFS archive (encrypted Zarr datasets) | Planned |
 | 6 | Blockchain anchoring (Hyperledger Besu) + proof API | Planned |
 | 7 | Dashboard (React + MUI, SeceoKnight design style) + live map | Done (v1) |
@@ -52,7 +52,10 @@ Dashboard (second Terminal window):
 
 Production: `npm run build` in frontend/, then the backend serves the dashboard itself on port 4100.
 
+Verify a batch offline (auditors): `npm run verify -- <batch.manifest.json> <signing-key.pub.json>`
+
 API:
+- `GET /api/v1/trust/summary`, `/trust/keys`, `/trust/batches`, `/trust/batches/{id}` (fresh verification)
 - `GET /api/v1/health`, `/sources`, `/stats`
 - `GET /api/v1/devices?source=&bbox=lon_min,lat_min,lon_max,lat_max&active_hours=`
 - `GET /api/v1/observations/latest?parameter=sea_surface_temperature&bbox=&hours=`

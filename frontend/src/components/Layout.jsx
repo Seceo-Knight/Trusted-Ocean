@@ -3,6 +3,7 @@ import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import BiotechRoundedIcon from '@mui/icons-material/BiotechRounded';
 import HubRoundedIcon from '@mui/icons-material/HubRounded';
+import VerifiedUserRoundedIcon from '@mui/icons-material/VerifiedUserRounded';
 import { NavLink, useLocation } from 'react-router-dom';
 import { colors } from '../theme';
 import { api } from '../lib/api';
@@ -12,9 +13,10 @@ const NAV = [
   { to: '/', label: 'Overview', icon: <DashboardRoundedIcon /> },
   { to: '/map', label: 'Ocean map', icon: <PublicRoundedIcon /> },
   { to: '/biodiversity', label: 'Biodiversity (eDNA)', icon: <BiotechRoundedIcon /> },
+  { to: '/trust', label: 'Trust and verification', icon: <VerifiedUserRoundedIcon /> },
   { to: '/sources', label: 'Data sources', icon: <HubRoundedIcon /> },
 ];
-const TITLES = { '/': 'Overview', '/map': 'Ocean map', '/biodiversity': 'Biodiversity and eDNA', '/sources': 'Data sources' };
+const TITLES = { '/': 'Overview', '/map': 'Ocean map', '/biodiversity': 'Biodiversity and eDNA', '/sources': 'Data sources', '/trust': 'Trust and verification' };
 
 function Logo() {
   return (

@@ -9,6 +9,8 @@ const config = require('./config');
 const db = require('./db');
 const { startScheduler } = require('./collectors');
 const routes = require('./routes');
+const trustRoutes = require('./routes-trust');
+const { loadSigningKey } = require('./trust/pqc');
 
 const app = express();
 app.disable('x-powered-by');
@@ -32,6 +34,7 @@ app.use(compression());
 app.use(cors({ origin: config.corsOrigin }));
 app.use(express.json({ limit: '100kb' }));
 
+app.use('/api/v1/trust', trustRoutes);
 app.use('/api/v1', routes);
 
 // Production: serve the built dashboard (frontend/dist) from the same server.
@@ -53,6 +56,8 @@ async function main() {
   await db.waitForDb();
   await db.migrate();
   console.log('[db] ready');
+  const key = await loadSigningKey();
+  console.log(`[trust] signing with ${key.alg} key ${key.keyId}`);
   app.listen(config.port, config.host, () => {
     console.log(`Trusted Ocean API on http://${config.host}:${config.port}`);
     startScheduler();

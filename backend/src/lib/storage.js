@@ -1,7 +1,9 @@
 'use strict';
-// File archive next to the database.
-// Keeps: a daily NDJSON log of all envelopes, and the untouched raw
-// source file with its SHA-256 hash (proof of exactly what the provider sent us).
+// File archive next to the database. For every batch it keeps:
+//   raw/<stamp>_<hash>.txt               exactly what the provider sent
+//   signed/<stamp>_<hash>.ndjson         our records in canonical form (fingerprinted in the manifest)
+//   signed/<stamp>_<hash>.manifest.json  the ML-DSA signed manifest
+// These files are what the IPFS archive step will publish.
 const fs = require('fs/promises');
 const path = require('path');
 const config = require('../config');
@@ -11,16 +13,33 @@ async function ensureDir(dir) {
   return dir;
 }
 
-async function saveBatch(sourceId, { rawText, rawSha256, envelopes }) {
-  const dir = await ensureDir(path.join(config.dataDir, sourceId));
+async function saveBatch(sourceId, batch, signed) {
+  const dir = path.join(config.dataDir, sourceId);
   const rawDir = await ensureDir(path.join(dir, 'raw'));
+  const signedDir = await ensureDir(path.join(dir, 'signed'));
   const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const day = stamp.slice(0, 10);
+  const name = `${stamp}_${signed.manifestSha256.slice(0, 12)}`;
 
-  await fs.writeFile(path.join(rawDir, `${stamp}_${rawSha256.slice(0, 12)}.txt`), rawText);
-  if (envelopes.length) {
-    await fs.appendFile(path.join(dir, `${day}.ndjson`), envelopes.map((e) => JSON.stringify(e)).join('\n') + '\n');
-  }
+  const files = {
+    raw: path.join(sourceId, 'raw', `${stamp}_${batch.rawSha256.slice(0, 12)}.txt`),
+    records: path.join(sourceId, 'signed', `${name}.ndjson`),
+    manifest: path.join(sourceId, 'signed', `${name}.manifest.json`),
+  };
+  await fs.writeFile(path.join(rawDir, path.basename(files.raw)), batch.rawText || '');
+  await fs.writeFile(path.join(signedDir, path.basename(files.records)), signed.envelopesText);
+  await fs.writeFile(path.join(signedDir, path.basename(files.manifest)), JSON.stringify({
+    manifest: signed.manifest,
+    manifest_sha256: signed.manifestSha256,
+    signature: signed.signature.toString('base64'),
+    records_file: path.basename(files.records),
+  }, null, 1));
+  return files;
 }
 
-module.exports = { saveBatch };
+async function readDataFile(relPath) {
+  const full = path.resolve(config.dataDir, relPath);
+  if (!full.startsWith(path.resolve(config.dataDir) + path.sep)) throw new Error('invalid data path');
+  try { return await fs.readFile(full, 'utf8'); } catch (err) { if (err.code === 'ENOENT') return null; throw err; }
+}
+
+module.exports = { saveBatch, readDataFile };

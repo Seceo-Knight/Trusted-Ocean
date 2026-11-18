@@ -22,4 +22,8 @@ export const api = {
   sites: (p) => get('/biodiversity/sites', p),
   site: (p) => get('/biodiversity/site', p),
   datasets: (p) => get('/biodiversity/datasets', p),
+  trustSummary: () => get('/trust/summary'),
+  trustKeys: () => get('/trust/keys'),
+  trustBatches: (p) => get('/trust/batches', p),
+  trustBatch: (id) => get(`/trust/batches/${encodeURIComponent(id)}`),
 };

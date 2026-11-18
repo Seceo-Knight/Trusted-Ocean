@@ -11,6 +11,8 @@ module.exports = {
   host: process.env.HOST || '127.0.0.1',
   port: int(process.env.PORT, 4100),
   dataDir: path.resolve(__dirname, '..', process.env.DATA_DIR || 'data'),
+  // ML-DSA signing key (secret). Keep out of Git and back it up safely.
+  keysDir: path.resolve(__dirname, '..', process.env.KEYS_DIR || 'keys'),
   didDomain: process.env.DID_DOMAIN || 'trustedocean.local',
   userAgent: process.env.HTTP_USER_AGENT || 'TrustedOcean/0.1',
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',

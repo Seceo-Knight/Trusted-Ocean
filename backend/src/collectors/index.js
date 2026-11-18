@@ -3,6 +3,7 @@
 const config = require('../config');
 const { saveBatch } = require('../lib/storage');
 const db = require('../db');
+const { signBatch } = require('../trust/manifest');
 const ndbc = require('./ndbc');
 const argo = require('./argo');
 const copernicus = require('./copernicus');
@@ -49,8 +50,10 @@ async function runOnce(id) {
   st.last_run = new Date().toISOString();
   try {
     const batch = timeGuard(await entry.collector.collect(), entry.settings.maxAgeDays || 30);
-    await saveBatch(id, batch); // raw file + daily archive (kept for IPFS and audits)
-    const stored = await db.ingestBatch(id, entry.collector.info, batch);
+    const signed = await signBatch(id, entry.collector.info, batch); // ML-DSA-65 signed manifest
+    const files = await saveBatch(id, batch, signed); // raw + records + manifest files
+    const stored = await db.ingestBatch(id, entry.collector.info, batch, signed, files);
+    batch.summary.signature = { alg: signed.manifest.sig_alg, key_id: signed.manifest.key_id, manifest_sha256: signed.manifestSha256 };
     batch.summary.database = stored;
     Object.assign(st, {
       last_success: st.last_run,
@@ -59,7 +62,7 @@ async function runOnce(id) {
       observations: batch.summary.observations,
       database: stored,
     });
-    console.log(`[${id}] ok: ${batch.summary.stations} stations, ${batch.summary.observations} values, db +${stored.inserted} new / ${stored.duplicates} already stored, sha256 ${batch.rawSha256.slice(0, 12)}`);
+    console.log(`[${id}] ok: ${batch.summary.stations} stations, ${batch.summary.observations} values, db +${stored.inserted} new / ${stored.duplicates} already stored, signed ${signed.manifest.sig_alg} ${signed.manifestSha256.slice(0, 12)}`);
     return batch.summary;
   } catch (err) {
     st.last_error = err.message;

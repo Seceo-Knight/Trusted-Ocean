@@ -14,6 +14,7 @@
     "db:up": "docker compose up -d && docker compose ps",
     "db:down": "docker compose stop",
     "db:import": "node src/cli/import-archive.js",
+    "verify": "node src/cli/verify.js",
     "setup:python": "cd python && python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r requirements.txt"
   },
   "engines": { "node": ">=18.17.0" },
@@ -22,6 +23,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "@noble/post-quantum": "^0.7.1",
     "helmet": "^8.1.0",
     "pg": "^8.23.1",
     "uuid": "^11.1.0"

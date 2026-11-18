@@ -64,7 +64,7 @@ export default function Overview() {
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<SensorsRoundedIcon fontSize="small" />} label="Active devices (24 h)" value={fmtNumber(active24)} hint={`${fmtNumber(devicesTotal)} devices known in total`} /></Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<StorageRoundedIcon fontSize="small" />} label="Observations stored" value={fmtNumber(obsRows)} hint="Physical measurements, de-duplicated" accent={colors.purple} /></Grid>
         <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<BiotechRoundedIcon fontSize="small" />} label="eDNA records" value={fmtNumber(bio && bio.rows)} hint={bio ? `${fmtNumber(bio.taxa)} taxa from ${fmtNumber(bio.datasets)} datasets` : ''} accent={colors.amber} /></Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<VerifiedRoundedIcon fontSize="small" />} label="Data sources healthy" value={`${healthy} / ${srcList.length || '-'}`} hint="Every batch fingerprinted (SHA-256)" accent={colors.green} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<VerifiedRoundedIcon fontSize="small" />} label="Data sources healthy" value={`${healthy} / ${srcList.length || '-'}`} hint="Every batch signed (ML-DSA-65, quantum-safe)" accent={colors.green} /></Grid>
       </Grid>
 
       <Grid container spacing={2}>

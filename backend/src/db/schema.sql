@@ -93,3 +93,17 @@ SELECT create_hypertable('occurrences', by_range('time', INTERVAL '90 days'), if
 CREATE UNIQUE INDEX IF NOT EXISTS occurrences_uniq ON occurrences (occurrence_id, time);
 CREATE INDEX IF NOT EXISTS occurrences_aphia ON occurrences (aphia_id, time DESC);
 CREATE INDEX IF NOT EXISTS occurrences_lat_lon ON occurrences (lat, lon);
+
+-- Trust layer: public keys used to sign batch manifests (secret keys never stored here)
+CREATE TABLE IF NOT EXISTS signing_keys (
+  key_id      text PRIMARY KEY,
+  alg         text NOT NULL,
+  public_key  bytea NOT NULL,
+  created_at  timestamptz NOT NULL,
+  retired_at  timestamptz
+);
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS key_id text;
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS manifest jsonb;
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS manifest_sha256 text;
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS files jsonb;
+CREATE INDEX IF NOT EXISTS batches_manifest_sha ON batches (manifest_sha256);

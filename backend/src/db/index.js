@@ -119,7 +119,14 @@ async function insertOccurrences(client, envelopes, batchId) {
 }
 
 // Stores one collected batch in a single transaction (all or nothing).
-async function ingestBatch(sourceId, info, batch) {
+async function registerKey(client, key) {
+  await client.query(
+    `INSERT INTO signing_keys (key_id, alg, public_key, created_at) VALUES ($1, $2, $3, $4) ON CONFLICT (key_id) DO NOTHING`,
+    [key.key_id, key.alg, Buffer.from(key.public_key, 'base64'), key.created_at],
+  );
+}
+
+async function ingestBatch(sourceId, info, batch, signed = null, files = null) {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -129,9 +136,18 @@ async function ingestBatch(sourceId, info, batch) {
          attribution = EXCLUDED.attribution, url = EXCLUDED.url, updated_at = now()`,
       [sourceId, info.source_name, info.licence, info.attribution, info.source_url],
     );
+    if (signed) {
+      // publish our public key (only if it is the key that signed this manifest)
+      const { publicKeyDoc, loadSigningKey } = require('../trust/pqc');
+      const own = publicKeyDoc(await loadSigningKey());
+      if (own.key_id === signed.manifest.key_id) await registerKey(client, own);
+    }
     const { rows } = await client.query(
-      `INSERT INTO batches (source_id, fetched_at, raw_sha256, records, summary) VALUES ($1, $2, $3, $4, $5) RETURNING id`,
-      [sourceId, batch.summary.fetched_at || new Date().toISOString(), batch.rawSha256, batch.envelopes.length, batch.summary],
+      `INSERT INTO batches (source_id, fetched_at, raw_sha256, records, summary, sig_alg, batch_sig, key_id, manifest, manifest_sha256, files)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+      [sourceId, batch.summary.fetched_at || new Date().toISOString(), batch.rawSha256, batch.envelopes.length, batch.summary,
+        signed ? signed.manifest.sig_alg : null, signed ? signed.signature : null, signed ? signed.manifest.key_id : null,
+        signed ? signed.manifest : null, signed ? signed.manifestSha256 : null, files],
     );
     const batchId = rows[0].id;
 
