@@ -1,0 +1,29 @@
+{
+  "name": "trusted-ocean-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Trusted Ocean Observation Platform - backend (collectors, API)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "collect:ndbc": "node src/cli/collect.js ndbc",
+    "collect:argo": "node src/cli/collect.js argo",
+    "collect:copernicus": "node src/cli/collect.js copernicus",
+    "collect:obis": "node src/cli/collect.js obis",
+    "db:up": "docker compose up -d && docker compose ps",
+    "db:down": "docker compose stop",
+    "db:import": "node src/cli/import-archive.js",
+    "setup:python": "cd python && python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r requirements.txt"
+  },
+  "engines": { "node": ">=18.17.0" },
+  "dependencies": {
+    "compression": "^1.8.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "helmet": "^8.1.0",
+    "pg": "^8.23.1",
+    "uuid": "^11.1.0"
+  }
+}
