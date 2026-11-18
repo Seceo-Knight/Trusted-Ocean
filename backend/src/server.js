@@ -11,6 +11,7 @@ const { startScheduler } = require('./collectors');
 const routes = require('./routes');
 const trustRoutes = require('./routes-trust');
 const { loadSigningKey } = require('./trust/pqc');
+const { startArchiver } = require('./archive/archiver');
 
 const app = express();
 app.disable('x-powered-by');
@@ -61,6 +62,7 @@ async function main() {
   app.listen(config.port, config.host, () => {
     console.log(`Trusted Ocean API on http://${config.host}:${config.port}`);
     startScheduler();
+    startArchiver();
   });
 }
 

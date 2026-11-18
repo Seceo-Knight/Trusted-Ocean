@@ -15,7 +15,7 @@ Architecture & Integration Reference. No dummy or simulated data is used.
 | 2 | More collectors: Argo, Copernicus Marine, OBIS done; EMODnet, GBIF, NOAA ERDDAP, tides, AIS next | In progress |
 | 3 | TimescaleDB time-series database + query API | Done |
 | 4 | Post-quantum signing of every batch (ML-DSA-65) + verification API, CLI and dashboard page | Done |
-| 5 | IPFS archive (encrypted Zarr datasets) | Planned |
+| 5 | Private IPFS archive of every signed batch (auto-retry, archive verification) | Done (v1) |
 | 6 | Blockchain anchoring (Hyperledger Besu) + proof API | Planned |
 | 7 | Dashboard (React + MUI, SeceoKnight design style) + live map | Done (v1) |
 | 8 | AI: anomaly detection and alerts | Planned |

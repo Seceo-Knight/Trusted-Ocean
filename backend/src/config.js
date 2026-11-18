@@ -23,6 +23,12 @@ module.exports = {
     user: process.env.DB_USER || 'ocean',
     password: process.env.DB_PASSWORD || '',
   },
+  ipfs: {
+    enabled: process.env.IPFS_ENABLED !== 'false',
+    apiUrl: (process.env.IPFS_API_URL || 'http://127.0.0.1:5101').replace(/\/$/, ''),
+    gatewayUrl: (process.env.IPFS_GATEWAY_URL || 'http://127.0.0.1:8089').replace(/\/$/, ''),
+    retryMinutes: Math.max(1, int(process.env.IPFS_RETRY_MINUTES, 10)),
+  },
   ndbc: {
     enabled: process.env.NDBC_ENABLED !== 'false',
     // NDBC refreshes its latest-observations file about every 5 minutes; 10 is polite.

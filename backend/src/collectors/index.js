@@ -54,6 +54,16 @@ async function runOnce(id) {
     const files = await saveBatch(id, batch, signed); // raw + records + manifest files
     const stored = await db.ingestBatch(id, entry.collector.info, batch, signed, files);
     batch.summary.signature = { alg: signed.manifest.sig_alg, key_id: signed.manifest.key_id, manifest_sha256: signed.manifestSha256 };
+    if (config.ipfs.enabled) {
+      // archive right away; if IPFS is down the batch stays pending and the archiver retries
+      try {
+        const archived = await require('../archive/archiver').publishBatch(stored.batch_id);
+        batch.summary.ipfs_cid = archived.dir;
+        console.log(`[${id}] archived to IPFS ${archived.dir}`);
+      } catch (err) {
+        console.error(`[${id}] IPFS archive pending: ${err.message}`);
+      }
+    }
     batch.summary.database = stored;
     Object.assign(st, {
       last_success: st.last_run,

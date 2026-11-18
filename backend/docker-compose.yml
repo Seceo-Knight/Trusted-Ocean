@@ -1,5 +1,5 @@
-# Trusted Ocean database: PostgreSQL 17 + TimescaleDB (pinned version, same on Mac and Ubuntu).
-# Start: npm run db:up    Stop: npm run db:down    (data is kept in the "ocean_db" volume)
+# Trusted Ocean services: PostgreSQL 17 + TimescaleDB, and a private IPFS node (pinned versions, same on Mac and Ubuntu).
+# Start: npm run db:up    Stop: npm run db:down    (data is kept in the ocean_db and ocean_ipfs volumes)
 services:
   db:
     image: timescale/timescaledb:2.26.1-pg17
@@ -18,5 +18,22 @@ services:
       interval: 10s
       timeout: 5s
       retries: 12
+  # Private IPFS node for the tamper-evident archive (pinned version, private swarm only)
+  ipfs:
+    image: ipfs/kubo:v0.43.1
+    container_name: trusted-ocean-ipfs
+    restart: unless-stopped
+    environment:
+      IPFS_PROFILE: server
+      LIBP2P_FORCE_PNET: "1"            # refuse to run without the private network key
+      IPFS_SWARM_KEY_FILE: /run/trusted-ocean/swarm.key
+    volumes:
+      - ocean_ipfs:/data/ipfs
+      - ./ipfs/swarm.key:/run/trusted-ocean/swarm.key:ro
+      - ./ipfs/001-private-network.sh:/container-init.d/001-private-network.sh:ro
+    ports:
+      - "127.0.0.1:5101:5001"   # IPFS admin API, only reachable from this computer
+      - "127.0.0.1:8089:8080"   # read-only gateway, only reachable from this computer
 volumes:
   ocean_db:
+  ocean_ipfs:

@@ -107,3 +107,7 @@ ALTER TABLE batches ADD COLUMN IF NOT EXISTS manifest jsonb;
 ALTER TABLE batches ADD COLUMN IF NOT EXISTS manifest_sha256 text;
 ALTER TABLE batches ADD COLUMN IF NOT EXISTS files jsonb;
 CREATE INDEX IF NOT EXISTS batches_manifest_sha ON batches (manifest_sha256);
+
+-- Archive layer: IPFS content identifiers for each published batch
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS ipfs jsonb;
+CREATE INDEX IF NOT EXISTS batches_pending_archive ON batches (id) WHERE batch_sig IS NOT NULL AND ipfs_cid IS NULL;
