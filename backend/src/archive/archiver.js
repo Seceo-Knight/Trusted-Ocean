@@ -65,12 +65,18 @@ async function archivePending(limit = 25) {
   return { published: done };
 }
 
+// Trust pipeline catch-up: archive pending batches to IPFS, then anchor archived ones on chain.
+async function catchUp() {
+  await archivePending().catch(() => {});
+  if (config.chain.enabled) await require('../chain/anchor').anchorPending().catch(() => {});
+}
+
 function startArchiver() {
   if (!config.ipfs.enabled) { console.log('[ipfs] archive disabled'); return; }
   const every = config.ipfs.retryMinutes * 60 * 1000;
-  setTimeout(() => archivePending().catch(() => {}), 15000).unref();
-  setInterval(() => archivePending().catch(() => {}), every).unref();
-  console.log(`[ipfs] archive retry every ${config.ipfs.retryMinutes} min`);
+  setTimeout(() => catchUp(), 15000).unref();
+  setInterval(() => catchUp(), every).unref();
+  console.log(`[ipfs] archive + chain anchor retry every ${config.ipfs.retryMinutes} min`);
 }
 
 module.exports = { publishBatch, archivePending, startArchiver, state };

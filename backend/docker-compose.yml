@@ -1,4 +1,4 @@
-# Trusted Ocean services: PostgreSQL 17 + TimescaleDB, and a private IPFS node (pinned versions, same on Mac and Ubuntu).
+# Trusted Ocean services: PostgreSQL 17 + TimescaleDB, a private IPFS node and a private Besu blockchain (pinned versions).
 # Start: npm run db:up    Stop: npm run db:down    (data is kept in the ocean_db and ocean_ipfs volumes)
 services:
   db:
@@ -34,6 +34,30 @@ services:
     ports:
       - "127.0.0.1:5101:5001"   # IPFS admin API, only reachable from this computer
       - "127.0.0.1:8089:8080"   # read-only gateway, only reachable from this computer
+  # Private Hyperledger Besu blockchain (QBFT consensus) for anchoring proofs.
+  # First time only: npm run chain:init (creates genesis.json and the validator key)
+  chain:
+    image: hyperledger/besu:26.8.1
+    container_name: trusted-ocean-chain
+    restart: unless-stopped
+    command:
+      - --data-path=/opt/besu/data
+      - --genesis-file=/cfg/genesis.json
+      - --sync-mode=FULL
+      - --min-gas-price=0
+      - --discovery-enabled=false
+      - --rpc-http-enabled=true
+      - --rpc-http-host=0.0.0.0
+      - --rpc-http-port=8545
+      - --rpc-http-api=ETH,NET,QBFT,WEB3
+      - --host-allowlist=localhost,127.0.0.1
+    volumes:
+      - chain_data:/opt/besu/data
+      - ./besu/genesis.json:/cfg/genesis.json:ro
+    ports:
+      - "127.0.0.1:8545:8545"   # JSON-RPC, only reachable from this computer
 volumes:
   ocean_db:
   ocean_ipfs:
+  chain_data:
+    name: trusted-ocean-chain-data

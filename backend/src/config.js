@@ -29,6 +29,10 @@ module.exports = {
     gatewayUrl: (process.env.IPFS_GATEWAY_URL || 'http://127.0.0.1:8089').replace(/\/$/, ''),
     retryMinutes: Math.max(1, int(process.env.IPFS_RETRY_MINUTES, 10)),
   },
+  chain: {
+    enabled: process.env.CHAIN_ENABLED !== 'false',
+    rpcUrl: process.env.CHAIN_RPC_URL || 'http://127.0.0.1:8545',
+  },
   ndbc: {
     enabled: process.env.NDBC_ENABLED !== 'false',
     // NDBC refreshes its latest-observations file about every 5 minutes; 10 is polite.

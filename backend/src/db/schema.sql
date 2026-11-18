@@ -111,3 +111,19 @@ CREATE INDEX IF NOT EXISTS batches_manifest_sha ON batches (manifest_sha256);
 -- Archive layer: IPFS content identifiers for each published batch
 ALTER TABLE batches ADD COLUMN IF NOT EXISTS ipfs jsonb;
 CREATE INDEX IF NOT EXISTS batches_pending_archive ON batches (id) WHERE batch_sig IS NOT NULL AND ipfs_cid IS NULL;
+
+-- Anchor layer: deployed contract per chain, and on-chain proof per batch
+CREATE TABLE IF NOT EXISTS chain_contracts (
+  id            bigserial PRIMARY KEY,
+  name          text NOT NULL,
+  chain_id      bigint NOT NULL,
+  address       text NOT NULL,
+  tx_hash       text,
+  block_number  bigint,
+  deployer      text,
+  compiler      text,
+  deployed_at   timestamptz NOT NULL DEFAULT now()
+);
+ALTER TABLE batches ADD COLUMN IF NOT EXISTS anchor jsonb;
+CREATE INDEX IF NOT EXISTS batches_pending_anchor ON batches (id) WHERE ipfs_cid IS NOT NULL AND anchor_tx IS NULL;
+CREATE INDEX IF NOT EXISTS batches_ipfs_cid ON batches (ipfs_cid);

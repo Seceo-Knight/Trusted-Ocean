@@ -60,6 +60,15 @@ async function runOnce(id) {
         const archived = await require('../archive/archiver').publishBatch(stored.batch_id);
         batch.summary.ipfs_cid = archived.dir;
         console.log(`[${id}] archived to IPFS ${archived.dir}`);
+        if (config.chain.enabled) {
+          try {
+            const anchored = await require('../chain/anchor').anchorBatch(stored.batch_id);
+            batch.summary.anchor = anchored;
+            console.log(`[${id}] anchored on chain, block ${anchored.block_number}`);
+          } catch (err) {
+            console.error(`[${id}] chain anchor pending: ${err.message}`);
+          }
+        }
       } catch (err) {
         console.error(`[${id}] IPFS archive pending: ${err.message}`);
       }

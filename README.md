@@ -16,7 +16,7 @@ Architecture & Integration Reference. No dummy or simulated data is used.
 | 3 | TimescaleDB time-series database + query API | Done |
 | 4 | Post-quantum signing of every batch (ML-DSA-65) + verification API, CLI and dashboard page | Done |
 | 5 | Private IPFS archive of every signed batch (auto-retry, archive verification) | Done (v1) |
-| 6 | Blockchain anchoring (Hyperledger Besu) + proof API | Planned |
+| 6 | Blockchain anchoring (private Hyperledger Besu, QBFT) + public proof API | Done (v1) |
 | 7 | Dashboard (React + MUI, SeceoKnight design style) + live map | Done (v1) |
 | 8 | AI: anomaly detection and alerts | Planned |
 
@@ -41,7 +41,8 @@ Architecture & Integration Reference. No dummy or simulated data is used.
     cp .env.example .env     # first time only, then set DB_PASSWORD
     npm install
     npm run setup:python     # first time only (Copernicus)
-    npm run db:up            # start the database (Docker Desktop must be running)
+    npm run chain:init       # first time only: create the private blockchain
+    npm run db:up            # start database, IPFS and blockchain (Docker Desktop must be running)
     npm start                # API on http://127.0.0.1:4100, collectors run on schedule
 
 Dashboard (second Terminal window):
@@ -56,6 +57,7 @@ Verify a batch offline (auditors): `npm run verify -- <batch.manifest.json> <sig
 
 API:
 - `GET /api/v1/trust/summary`, `/trust/keys`, `/trust/batches`, `/trust/batches/{id}` (fresh verification)
+- `GET /api/v1/trust/proof/{cid}`: full proof for an archive CID (signature, records, IPFS copy, blockchain anchor)
 - `GET /api/v1/health`, `/sources`, `/stats`
 - `GET /api/v1/devices?source=&bbox=lon_min,lat_min,lon_max,lat_max&active_hours=`
 - `GET /api/v1/observations/latest?parameter=sea_surface_temperature&bbox=&hours=`

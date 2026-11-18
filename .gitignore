@@ -9,3 +9,5 @@ frontend/node_modules/
 frontend/dist/
 backend/keys/
 backend/ipfs/swarm.key
+backend/besu/genesis.json
+backend/besu/validator-*

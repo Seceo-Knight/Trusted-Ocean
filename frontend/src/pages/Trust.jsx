@@ -6,6 +6,7 @@ import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
 import KeyRoundedIcon from '@mui/icons-material/KeyRounded';
 import ShieldRoundedIcon from '@mui/icons-material/ShieldRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import KpiTile from '../components/KpiTile';
 import Section from '../components/Section';
@@ -52,12 +53,17 @@ function BatchRow({ b, gateway }) {
                 label={shortCid(b.ipfs_cid)} title={b.ipfs_cid} sx={{ fontFamily: 'monospace', bgcolor: 'rgba(139,92,246,0.14)', color: colors.purple }} />
             : b.signed ? <Chip size="small" label="pending" variant="outlined" sx={{ color: colors.amber }} /> : <Typography variant="caption" color="text.secondary">-</Typography>}
         </TableCell>
+        <TableCell>
+          {b.anchor_tx
+            ? <Chip size="small" label={`block ${b.anchor_block || '?'}`} sx={{ bgcolor: 'rgba(16,185,129,0.14)', color: colors.green, fontWeight: 600 }} />
+            : b.ipfs_cid ? <Chip size="small" label="pending" variant="outlined" sx={{ color: colors.amber }} /> : <Typography variant="caption" color="text.secondary">-</Typography>}
+        </TableCell>
         <TableCell align="right">
           {b.signed && <Button size="small" variant="outlined" onClick={verify} disabled={state.loading}>{state.loading ? 'Checking' : 'Verify now'}</Button>}
         </TableCell>
       </TableRow>
       <TableRow>
-        <TableCell colSpan={7} sx={{ py: 0, borderBottom: state.open ? undefined : 'none' }}>
+        <TableCell colSpan={8} sx={{ py: 0, borderBottom: state.open ? undefined : 'none' }}>
           <Collapse in={state.open} unmountOnExit>
             <Box sx={{ py: 2 }}>
               {state.loading && <CircularProgress size={20} />}
@@ -66,7 +72,9 @@ function BatchRow({ b, gateway }) {
                 <Stack spacing={1.5}>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center' }}>
                     <Typography sx={{ fontWeight: 700, color: v.verified ? colors.green : colors.red, mr: 1 }}>
-                      {v.verified ? 'VERIFIED: data is exactly as collected and signed' : 'NOT VERIFIED: data does not match its signature'}
+                      {!v.verified ? 'NOT VERIFIED: data does not match its signature'
+                        : state.data.fully_verified ? 'FULLY VERIFIED: signed, archived and anchored on the blockchain'
+                          : 'VERIFIED: data is exactly as collected and signed'}
                     </Typography>
                     <Check ok={v.key_matches} label="signing key" />
                     <Check ok={v.signature_valid} label="post-quantum signature" />
@@ -74,7 +82,17 @@ function BatchRow({ b, gateway }) {
                     {state.data.archive && state.data.archive.archived
                       ? <Check ok={state.data.archive.records_match === true} label={state.data.archive.error ? 'IPFS archive unreachable' : 'IPFS archive copy matches'} />
                       : <Chip size="small" variant="outlined" label="not archived yet" sx={{ color: colors.amber }} />}
+                    {state.data.anchor && state.data.anchor.anchored
+                      ? <Check ok={state.data.anchor.cid_matches === true} label={`blockchain anchor (block ${state.data.anchor.on_chain.block_number})`} />
+                      : <Chip size="small" variant="outlined" label={state.data.anchor && state.data.anchor.error ? 'blockchain unreachable' : 'not anchored yet'} sx={{ color: colors.amber }} />}
                   </Box>
+                  {state.data.anchor && state.data.anchor.on_chain && state.data.anchor.on_chain.exists && (
+                    <Typography variant="caption" color="text.secondary">
+                      On-chain record: block {state.data.anchor.on_chain.block_number}, anchored {fmtTime(state.data.anchor.on_chain.anchored_at)}, contract{' '}
+                      <Box component="span" sx={{ fontFamily: 'monospace', color: colors.green }}>{state.data.anchor.on_chain.contract}</Box>
+                      {state.data.anchor.tx && <>, transaction <Box component="span" sx={{ fontFamily: 'monospace', color: colors.green }}>{state.data.anchor.tx.slice(0, 18)}…</Box></>}
+                    </Typography>
+                  )}
                   {state.data.archive && state.data.archive.dir_cid && (
                     <Typography variant="caption" color="text.secondary">
                       Archive CID <Box component="span" sx={{ fontFamily: 'monospace', color: colors.purple }}>{state.data.archive.dir_cid}</Box>, published {fmtTime(state.data.archive.published_at)}
@@ -116,12 +134,15 @@ export default function Trust() {
     <Stack spacing={2.5}>
       {(summary.error || batches.error) && <Alert severity="error">Cannot reach the trust API. Is the backend running?</Alert>}
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<VerifiedRoundedIcon fontSize="small" />} label="Signed batches" value={s ? fmtNumber(s.signed) : '-'} hint={s ? `of ${fmtNumber(s.batches)} in total, last ${s.last_signed ? fmtAgo(s.last_signed) : '-'}` : ''} accent={colors.green} /></Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<ShieldRoundedIcon fontSize="small" />} label="Algorithm" value="ML-DSA-65" hint="NIST FIPS 204, quantum-safe" /></Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<KeyRoundedIcon fontSize="small" />} label="Signing key" value={<Box component="span" sx={{ fontSize: 17, fontFamily: 'monospace' }}>{key ? key.key_id.replace('mldsa65:', '') : '-'}</Box>} hint={key ? `created ${fmtTime(key.created_at)}` : 'created on first signed batch'} accent={colors.purple} /></Grid>
-        <Grid size={{ xs: 12, sm: 6, lg: 3 }}><KpiTile icon={<Inventory2RoundedIcon fontSize="small" />} label="IPFS archive" value={s ? fmtNumber(s.archived) : '-'}
+        <Grid size={{ xs: 12, sm: 6, lg: 'grow' }}><KpiTile icon={<VerifiedRoundedIcon fontSize="small" />} label="Signed batches" value={s ? fmtNumber(s.signed) : '-'} hint={s ? `of ${fmtNumber(s.batches)} in total, last ${s.last_signed ? fmtAgo(s.last_signed) : '-'}` : ''} accent={colors.green} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 'grow' }}><KpiTile icon={<ShieldRoundedIcon fontSize="small" />} label="Algorithm" value="ML-DSA-65" hint="NIST FIPS 204, quantum-safe" /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 'grow' }}><KpiTile icon={<KeyRoundedIcon fontSize="small" />} label="Signing key" value={<Box component="span" sx={{ fontSize: 17, fontFamily: 'monospace' }}>{key ? key.key_id.replace('mldsa65:', '') : '-'}</Box>} hint={key ? `created ${fmtTime(key.created_at)}` : 'created on first signed batch'} accent={colors.purple} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 'grow' }}><KpiTile icon={<Inventory2RoundedIcon fontSize="small" />} label="IPFS archive" value={s ? fmtNumber(s.archived) : '-'}
           hint={!s ? '' : !s.ipfs || !s.ipfs.enabled ? 'archive disabled' : s.ipfs.node && s.ipfs.node.online ? `node online, ${fmtNumber(s.pending_archive)} pending` : `node offline, ${fmtNumber(s.pending_archive)} pending`}
           accent={s && s.ipfs && s.ipfs.node && !s.ipfs.node.online ? colors.red : colors.amber} /></Grid>
+        <Grid size={{ xs: 12, sm: 6, lg: 'grow' }}><KpiTile icon={<LinkRoundedIcon fontSize="small" />} label="Blockchain anchors" value={s ? fmtNumber(s.anchored) : '-'}
+          hint={!s || !s.chain ? '' : !s.chain.enabled ? 'anchoring disabled' : s.chain.online ? `Besu QBFT, block ${fmtNumber(s.chain.block_number)}, ${fmtNumber(s.pending_anchor)} pending` : `chain offline, ${fmtNumber(s.pending_anchor)} pending`}
+          accent={s && s.chain && s.chain.enabled && !s.chain.online ? colors.red : colors.green} /></Grid>
       </Grid>
 
       <Section title="How verification works">
@@ -130,7 +151,8 @@ export default function Trust() {
           original file and of our records. The manifest is signed with a post-quantum <b>ML-DSA-65</b> key that never leaves the server.
           Anyone holding the public key can check the signature. If even one value in the records is changed afterwards, the fingerprint
           no longer matches and verification fails. Each signed batch is also published to a private IPFS archive, where its address (CID) is
-          itself a fingerprint of the content, so the archived copy can be checked independently.
+          itself a fingerprint of the content, so the archived copy can be checked independently. Finally, the manifest fingerprint and the
+          archive CID are anchored on a private Hyperledger Besu blockchain, which gives a tamper-proof timestamp that cannot be rewritten later.
         </Typography>
         {key && (
           <Box sx={{ mt: 2, display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
@@ -146,7 +168,7 @@ export default function Trust() {
         {batches.loading && !batches.data && <CircularProgress size={22} />}
         <Table size="small">
           <TableHead>
-            <TableRow><TableCell>Batch</TableCell><TableCell>Source</TableCell><TableCell>Collected</TableCell><TableCell align="right">Records</TableCell><TableCell>Signature</TableCell><TableCell>IPFS archive</TableCell><TableCell /></TableRow>
+            <TableRow><TableCell>Batch</TableCell><TableCell>Source</TableCell><TableCell>Collected</TableCell><TableCell align="right">Records</TableCell><TableCell>Signature</TableCell><TableCell>IPFS archive</TableCell><TableCell>Blockchain</TableCell><TableCell /></TableRow>
           </TableHead>
           <TableBody>
             {(batches.data ? batches.data.batches : []).map((b) => <BatchRow key={b.id} b={b} gateway={(s && s.ipfs && s.ipfs.gateway_url) || 'http://127.0.0.1:8089'} />)}

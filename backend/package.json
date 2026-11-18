@@ -15,12 +15,14 @@
     "db:down": "docker compose stop",
     "db:import": "node src/cli/import-archive.js",
     "verify": "node src/cli/verify.js",
+    "chain:init": "node src/cli/chain-init.js",
     "setup:python": "cd python && python3 -m venv .venv && .venv/bin/pip install --upgrade pip && .venv/bin/pip install -r requirements.txt"
   },
   "engines": { "node": ">=18.17.0" },
   "dependencies": {
     "compression": "^1.8.1",
     "cors": "^2.8.5",
+    "ethers": "^6.17.0",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
     "@noble/post-quantum": "^0.7.1",
